@@ -12,26 +12,31 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to Staging') {
-            steps {
-                build job: 'Deploy-to-Staging'
-            }
-        }
-        stage('Deploy to Production') {
-            steps {
-                timeout(time:5, unit:'DAYS') {
-                    input message: 'Approve PRODUCTION Deployment?'
-                }
 
-                build job: 'Deploy-to-Production'
-            }
-            post {
-                success {
-                    echo 'Code deployed to Production'
+        stage('Deploy in Parallel') {
+            parallel{
+                stage('Deploy to Staging') {
+                    steps {
+                        build job: 'Deploy-to-Staging'
+                    }
                 }
+                stage('Deploy to Production') {
+                    steps {
+                        timeout(time:5, unit:'DAYS') {
+                            input message: 'Approve PRODUCTION Deployment?'
+                        }
 
-                failure {
-                    echo 'Deployment failed'
+                        build job: 'Deploy-to-Production'
+                    }
+                    post {
+                        success {
+                            echo 'Code deployed to Production'
+                        }
+
+                        failure {
+                            echo 'Deployment failed'
+                        }
+                    }
                 }
             }
         }
